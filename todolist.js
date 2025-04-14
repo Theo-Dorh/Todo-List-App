@@ -1,23 +1,67 @@
-const inputContainer = document.getElementById('input-container');
-const listContainer = document.getElementById('list-container');
+const input = document.querySelector('.input');
+const addBtn = document.querySelector('.add-button');
+const list = document.querySelector('.lists');
 
-function addTask() {
-    let list = document.createElement("li");
-    list.innerText = inputContainer.value;
-    listContainer.appendChild(list);
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+let editIndex = null;
 
-    let crossIcon = document.createElement("span");
-    crossIcon.innerHTML = "\u00d7";
-    list.appendChild(crossIcon);
+renderTasks();
 
-    inputContainer.value = "";
+function save() {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-listContainer.addEventListener("click", function(e){
-        if(e.target.tagName === "LI") {
-            e.target.classList.toggle("checked");
-        }
-        else if(e.target.tagName === "SPAN") {
-            e.target.parentElement.remove();
-        }
-    }, false);
+function renderTasks() {
+  list.innerHTML = '';
+  tasks.forEach((task, i) => {
+    const li = document.createElement('li');
+    li.className = 'list-row';
+
+    li.innerHTML = `
+      <button class="${task.checked ? 'checked' : 'unchecked'}">
+        <ion-icon name="${task.checked ? 'checkmark-circle-outline' : 'ellipse-outline'}"></ion-icon>
+      </button>
+      <span class="${task.checked ? 'checked' : ''}">${task.text}</span>
+      <button class="edit-button"><ion-icon name="create"></ion-icon></button>
+      <button class="delete-button"><ion-icon name="trash"></ion-icon></button>
+    `;
+
+    li.children[0].onclick = () => {
+      tasks[i].checked = !tasks[i].checked;
+      save(); renderTasks();
+    };
+
+    li.children[2].onclick = () => {
+      input.value = task.text;
+      editIndex = i;
+      input.focus();
+    };
+
+    li.children[3].onclick = () => {
+      tasks.splice(i, 1);
+      save(); renderTasks();
+    };
+
+    list.appendChild(li);
+  });
+}
+
+addBtn.onclick = () => {
+  let text = input.value.trim();
+
+
+  if (!text) {
+    alert("Please enter a task!");
+    return;
+  }
+
+  if (editIndex !== null) {
+    tasks[editIndex].text = text;
+    editIndex = null;
+  } else {
+    tasks.push({ text, checked: false });
+  }
+
+  input.value = '';
+  save(); renderTasks();
+};
